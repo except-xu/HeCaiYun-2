@@ -118,7 +118,7 @@ class Account():
         })
         resp = json.loads(self.session.post(target, data=payload).text)
         if resp['code'] != 10000:
-            log('获取时间戳失败: ', resp['msg'])
+            log('获取时间戳失败: {}'.format(resp['msg']))
             return 0
         return resp['result']
 
@@ -131,7 +131,7 @@ class Account():
         }
         resp = json.loads(requests.post(target, data=payload).text)
         if resp['code'] != 200:
-            log('加密失败: ', resp['msg'])
+            log('加密失败: {}'.format(resp['msg']))
         return resp['data']
 
     def luckDraw(self):
@@ -143,7 +143,7 @@ class Account():
         resp = json.loads(self.session.post(target, data=payload).text)
 
         if resp['code'] != 10000:
-            log('自动抽奖失败: ', resp['msg'])
+            log('自动抽奖失败: {}'.format(resp['msg']))
             return '自动抽奖失败: ' + resp['msg']
         else:
             if resp['result']['type'] == '40160':
