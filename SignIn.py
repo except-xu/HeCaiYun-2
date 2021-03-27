@@ -22,10 +22,10 @@ def log(text):
 
 
 class Account():
-    def __init__(self):
+    def __init__(self, Cookie):
         self.OpenLuckDraw = False  # 是否开启自动幸运抽奖(首次免费, 第二次5积分/次) 不建议开启 否则会导致多次执行时消耗积分
         self.Skey = ""  # 酷推 skey
-        self.Cookie = ""  # 抓包Cookie 存在引号时 请使用 \ 转义
+        self.Cookie = Cookie  # 抓包Cookie 存在引号时 请使用 \ 转义
         self.Referer = "https://caiyun.feixin.10086.cn:7071/portal/newsignin/index.jsp"  # 抓包referer
         self.UA = "Mozilla/5.0 (Linux; Android 10; M2007J3SC Build/QKQ1.191222.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/83.0.4103.106 Mobile Safari/537.36 MCloudApp/7.6.0"
         self.session = requests.session()
@@ -121,8 +121,7 @@ class Account():
 
 
 def run(Cookie: str, OpenLuckDraw: bool):
-    account = Account()
-    account.Cookie = Cookie
+    account = Account(Cookie)
     account.OpenLuckDraw = OpenLuckDraw
     account.sign_in()
 
