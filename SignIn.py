@@ -7,6 +7,7 @@
 import json
 from urllib import parse
 import time
+import os, sys
 import requests
 
 
@@ -99,7 +100,7 @@ class Account():
             else:
                 return '自动抽奖成功: 谢谢参与'
 
-    def run(self):
+    def sign_in(self):
         target = "http://caiyun.feixin.10086.cn:7070/portal/ajax/common/caiYunSignIn.action"
 
         ticket = self.getTicket()
@@ -119,14 +120,58 @@ class Account():
             self.push('和彩云签到', content)
 
 
-def run():
-    pass
+def run(Cookie: str, OpenLuckDraw: bool):
+    account = Account()
+    account.Cookie = Cookie
+    account.OpenLuckDraw = OpenLuckDraw
+    account.sign_in()
 
 
-def main_handler(event, context):
-    run()
+def conf_file_run(account_conf_file):
+    with open(account_conf_file) as f:
+        account_conf = json.loads(f.read())
+    for account in account_conf:
+        log("开始账号")
+        run(account["Cookie"], account["OpenLuckDraw"])
+
+
+def cli_arg_run(argv):
+    '''
+    命令行参数启动
+    :return:
+    '''
+    Cookie_list = argv[1].split("#")
+    OpenLuckDraw_list = argv[2].split("#")
+    if len(Cookie_list) != len(OpenLuckDraw_list):
+        log("请确保<Cookie>和<是否开启抽奖的设置>数量一致")
+    for i in range(0, len(Cookie_list)):
+        Cookie = Cookie_list[i]
+        OpenLuckDraw = False  # 默认不开启抽奖
+        if "ture" == OpenLuckDraw_list[i]:  # 如果设置了ture才开启
+            OpenLuckDraw = True
+        # elif "false" == OpenLuckDraw_list[i]:
+        #     OpenLuckDraw = False
+        log("开始账号")
+        run(Cookie, OpenLuckDraw)
+
+
+def tencent_SCF_run(event, context):
+    environment = eval(context["environment"])
+    cli_arg_run([environment["SCF_NAMESPACE"], environment["Cookie"], environment["OpenLuckDraw"]])
 
 
 # 本地测试
 if __name__ == '__main__':
-    run()
+    if len(sys.argv) > 1:
+        log("命令行参数启动")
+        log("因cookie过于长，暂不支持命令行输入cookie等参数")
+        exit(1)
+        cli_arg_run(sys.argv)
+    else:
+        log("账号配置文件启动")
+        account_conf_file = "account_conf.json"
+        if not os.path.exists(account_conf_file) or not os.path.isfile(account_conf_file):
+            log("不存在账号配置文件{}".format(account_conf_file))
+            exit(1)
+        else:
+            conf_file_run(account_conf_file)
