@@ -74,17 +74,23 @@ class Tools():
         :param content:
         :return:
         '''
-        if push_key.startswith("coolpush://"):
-            cls.cool_push(push_key, title, content)
+        if "" == push_key or len(push_key) < len("://"):  # 代表未定义推送方式，为什么长度判断之前还要判断是不是空字符串
+            log("未定义推送方式")
+            return
+        fields = push_key.split("://")
+        channel = fields[0] + "://"
+        key = push_key[len(channel):]
+        if "coolpush://" == channel:
+            cls.cool_push(key, title, content)
             log("酷推推送结束")
-        elif push_key.startswith("sc://"):
-            cls.serverChanPush(push_key, title, content)
+        elif "sc://" == channel:
+            cls.serverChanPush(key, title, content)
             log("Server酱推送结束")
-        elif push_key.startswith("sct://"):
-            cls.serverChanTurboPush(push_key, title, content)
+        elif "sct://" == channel:
+            cls.serverChanTurboPush(key, title, content)
             log("Server酱Turbo推送结束")
-        elif push_key.startswith("wwcg://"):
-            cls.WorkWeChatGroupBotPush(push_key, title, content)
+        elif "wwcg://" == channel:
+            cls.WorkWeChatGroupBotPush(key, title, content)
             log("企业微信群机器人推送结束")
         else:
             log("不推送")
