@@ -178,14 +178,14 @@ class Account():
 
         resp = json.loads(self.session.post(target, data=payload).text)
         if resp['code'] != 10000:
-            Tools.push(self.push_key, '和彩云签到', '失败:' + resp['msg'])
+            Tools.push(self.push_key, '【失败】和彩云签到', '失败:' + resp['msg'])
         else:
             content = '签到成功\n本月累计签到:' + str(resp['result']['monthDays']) + '天\n总积分:' + str(resp['result']['totalPoints'])
             if self.OpenLuckDraw:
                 log("开始抽奖")
                 content += '\n\n' + self.luckDraw()
             log(content)
-            Tools.push(self.push_key, '和彩云签到', content)
+            Tools.push(self.push_key, '【成功】和彩云签到', content)
 
 
 def run(Cookie: str, OpenLuckDraw: bool, push_key: str):
