@@ -6,8 +6,18 @@
 
 import json
 from urllib import parse
-
+import time
 import requests
+
+
+def get_datetime():
+    local_time = time.localtime()
+    dt = time.strftime("%Y-%m-%d %H:%M:%S", local_time)
+    return dt
+
+
+def log(text):
+    print("{} - {}".format(get_datetime(), text))
 
 
 class Account():
@@ -37,7 +47,7 @@ class Account():
         # 发送请求
         res = requests.post(url=url, data=data.encode('utf-8')).text
         # 输出发送结果
-        print(res)
+        log(res)
 
     def getEncryptTime(self):
         target = "http://caiyun.feixin.10086.cn:7070/portal/ajax/tools/opRequest.action"
@@ -46,7 +56,7 @@ class Account():
         })
         resp = json.loads(self.session.post(target, data=payload).text)
         if resp['code'] != 10000:
-            print('获取时间戳失败: ', resp['msg'])
+            log('获取时间戳失败: ', resp['msg'])
             return 0
         return resp['result']
 
@@ -59,7 +69,7 @@ class Account():
         }
         resp = json.loads(requests.post(target, data=payload).text)
         if resp['code'] != 200:
-            print('加密失败: ', resp['msg'])
+            log('加密失败: ', resp['msg'])
         return resp['data']
 
     def luckDraw(self):
@@ -71,7 +81,7 @@ class Account():
         resp = json.loads(self.session.post(target, data=payload).text)
 
         if resp['code'] != 10000:
-            print('自动抽奖失败: ', resp['msg'])
+            log('自动抽奖失败: ', resp['msg'])
             return '自动抽奖失败: ' + resp['msg']
         else:
             if resp['result']['type'] == '40160':
