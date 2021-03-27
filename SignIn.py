@@ -21,6 +21,17 @@ def log(text):
     print("{} - {}".format(get_datetime(), text))
 
 
+class Tools():
+    @classmethod
+    def push(cls, push_key, title, content):
+        url = "https://push.xuthus.cc/send/" + push_key
+        data = title + "\n" + content
+        # 发送请求
+        res = requests.post(url=url, data=data.encode('utf-8')).text
+        # 输出发送结果
+        log(res)
+
+
 class Account():
     def __init__(self, Cookie):
         self.OpenLuckDraw = False  # 是否开启自动幸运抽奖(首次免费, 第二次5积分/次) 不建议开启 否则会导致多次执行时消耗积分
@@ -41,14 +52,6 @@ class Account():
             "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
             "Cookie": self.Cookie,
         }
-
-    def push(self, title, content):
-        url = "https://push.xuthus.cc/send/" + self.Skey
-        data = title + "\n" + content
-        # 发送请求
-        res = requests.post(url=url, data=data.encode('utf-8')).text
-        # 输出发送结果
-        log(res)
 
     def getEncryptTime(self):
         target = "http://caiyun.feixin.10086.cn:7070/portal/ajax/tools/opRequest.action"
@@ -111,18 +114,19 @@ class Account():
 
         resp = json.loads(self.session.post(target, data=payload).text)
         if resp['code'] != 10000:
-            self.push('和彩云签到', '失败:' + resp['msg'])
+            Tools.push(self.Skey, '和彩云签到', '失败:' + resp['msg'])
         else:
             content = '签到成功\n月签到天数:' + str(resp['result']['monthDays']) + '\n总积分:' + str(
                 resp['result']['totalPoints'])
             if self.OpenLuckDraw:
                 content += '\n\n' + self.luckDraw()
-            self.push('和彩云签到', content)
+            Tools.push(self.Skey, '和彩云签到', content)
 
 
-def run(Cookie: str, OpenLuckDraw: bool):
+def run(Cookie: str, OpenLuckDraw: bool, push_key: str):
     account = Account(Cookie)
     account.OpenLuckDraw = OpenLuckDraw
+    account.Skey = push_key
     account.sign_in()
 
 
@@ -131,7 +135,7 @@ def conf_file_run(account_conf_file):
         account_conf = json.loads(f.read())
     for account in account_conf:
         log("开始账号")
-        run(account["Cookie"], account["OpenLuckDraw"])
+        run(account["Cookie"], account["OpenLuckDraw"], account["push_key"])
 
 
 def cli_arg_run(argv):
@@ -141,6 +145,8 @@ def cli_arg_run(argv):
     '''
     Cookie_list = argv[1].split("#")
     OpenLuckDraw_list = argv[2].split("#")
+    # todo: 处理参数不足的问题
+    push_key_list = argv[3].split("#")
     if len(Cookie_list) != len(OpenLuckDraw_list):
         log("请确保<Cookie>和<是否开启抽奖的设置>数量一致")
     for i in range(0, len(Cookie_list)):
@@ -150,13 +156,23 @@ def cli_arg_run(argv):
             OpenLuckDraw = True
         # elif "false" == OpenLuckDraw_list[i]:
         #     OpenLuckDraw = False
+
+        # 如果push_key的数量没有cookie的多，则只使用第一个push_key，否则按顺序使用
+        if len(push_key_list) < len(Cookie_list):
+            push_key = push_key_list[0]
+        else:
+            push_key = push_key_list[i]
         log("开始账号")
-        run(Cookie, OpenLuckDraw)
+        run(Cookie, OpenLuckDraw, push_key)
 
 
 def tencent_SCF_run(event, context):
     environment = eval(context["environment"])
-    cli_arg_run([environment["SCF_NAMESPACE"], environment["Cookie"], environment["OpenLuckDraw"]])
+    if environment.has_key('push_key'):
+        push_key = environment["push_key"]
+    else:
+        push_key = ""
+    cli_arg_run([environment["SCF_NAMESPACE"], environment["Cookie"], environment["OpenLuckDraw"], push_key])
 
 
 # 本地测试
