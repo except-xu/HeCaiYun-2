@@ -57,7 +57,7 @@ class Tools():
                 "content": "### {title}\n\n{content}".format(title=title, content=content)
             }
         }
-        res = requests.post(url=url, data=data)
+        res = requests.post(url=url, data=json.dumps(data))
         return res
 
     @classmethod
