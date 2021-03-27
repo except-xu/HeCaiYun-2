@@ -180,10 +180,11 @@ class Account():
         if resp['code'] != 10000:
             Tools.push(self.push_key, '和彩云签到', '失败:' + resp['msg'])
         else:
-            content = '签到成功\n月签到天数:' + str(resp['result']['monthDays']) + '\n总积分:' + str(
-                resp['result']['totalPoints'])
+            content = '签到成功\n本月累计签到:' + str(resp['result']['monthDays']) + '天\n总积分:' + str(resp['result']['totalPoints'])
             if self.OpenLuckDraw:
+                log("开始抽奖")
                 content += '\n\n' + self.luckDraw()
+            log(content)
             Tools.push(self.push_key, '和彩云签到', content)
 
 
