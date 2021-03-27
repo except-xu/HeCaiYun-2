@@ -23,19 +23,77 @@ def log(text):
 
 class Tools():
     @classmethod
-    def push(cls, push_key, title, content):
+    def cool_push(cls, push_key: str, title: str, content: str):
         url = "https://push.xuthus.cc/send/" + push_key
         data = title + "\n" + content
         # 发送请求
         res = requests.post(url=url, data=data.encode('utf-8')).text
         # 输出发送结果
-        log(res)
+        return res
+
+    @classmethod
+    def serverChanPush(cls, Sckey: str, text: str, desp: str):
+        # Server酱通知服务
+        serverChan_res = requests.get(
+            'https://sc.ftqq.com/' + Sckey + '.send?text=' + text + '&desp=' + desp)
+        return serverChan_res
+
+    @classmethod
+    def serverChanTurboPush(cls, SendKey: str, text: str, desp: str):
+        # Server酱通知服务
+        serverChan_res = requests.get(
+            'https://sctapi.ftqq.com/' + SendKey + '.send?title=' + text + '&desp=' + desp)
+        return serverChan_res
+
+    @classmethod
+    def WorkWeChatGroupBotPush(cls, push_key: str, title: str, content: str):
+        if push_key.startswith("https://"):
+            url = push_key
+        else:
+            url = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key={key}".format(key=push_key)
+        data = {
+            "msgtype": "markdown",
+            "markdown": {
+                "content": "### {title}\n\n{content}".format(title=title, content=content)
+            }
+        }
+        res = requests.post(url=url, data=data)
+        return res
+
+    @classmethod
+    def push(cls, push_key: str, title: str, content: str):
+        '''
+        通过push_key前缀判断使用的推送方式
+        1、Cool Push（酷推）：前缀使用“coolpush://”，例如"coolpush://cfde4cd50e4e7386590000000000000"
+        2、Server酱：前缀使用“sc://”
+        3、Server酱Turbo版：前缀使用“sct://”
+        4、企业微信群机器人：前缀使用“wwcg://”
+        其他格式一律不推送
+        :param push_key:
+        :param title:
+        :param content:
+        :return:
+        '''
+        if push_key.startswith("coolpush://"):
+            cls.cool_push(push_key, title, content)
+            log("酷推推送结束")
+        elif push_key.startswith("sc://"):
+            cls.serverChanPush(push_key, title, content)
+            log("Server酱推送结束")
+        elif push_key.startswith("sct://"):
+            cls.serverChanTurboPush(push_key, title, content)
+            log("Server酱Turbo推送结束")
+        elif push_key.startswith("wwcg://"):
+            cls.WorkWeChatGroupBotPush(push_key, title, content)
+            log("企业微信群机器人推送结束")
+        else:
+            log("不推送")
 
 
 class Account():
     def __init__(self, Cookie):
         self.OpenLuckDraw = False  # 是否开启自动幸运抽奖(首次免费, 第二次5积分/次) 不建议开启 否则会导致多次执行时消耗积分
-        self.Skey = ""  # 酷推 skey
+        self.push_key = ""  # 推送的key，酷推、Server酱、微信群机器人等赋值于此
         self.Cookie = Cookie  # 抓包Cookie 存在引号时 请使用 \ 转义
         self.Referer = "https://caiyun.feixin.10086.cn:7071/portal/newsignin/index.jsp"  # 抓包referer
         self.UA = "Mozilla/5.0 (Linux; Android 10; M2007J3SC Build/QKQ1.191222.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/83.0.4103.106 Mobile Safari/537.36 MCloudApp/7.6.0"
@@ -114,19 +172,19 @@ class Account():
 
         resp = json.loads(self.session.post(target, data=payload).text)
         if resp['code'] != 10000:
-            Tools.push(self.Skey, '和彩云签到', '失败:' + resp['msg'])
+            Tools.push(self.push_key, '和彩云签到', '失败:' + resp['msg'])
         else:
             content = '签到成功\n月签到天数:' + str(resp['result']['monthDays']) + '\n总积分:' + str(
                 resp['result']['totalPoints'])
             if self.OpenLuckDraw:
                 content += '\n\n' + self.luckDraw()
-            Tools.push(self.Skey, '和彩云签到', content)
+            Tools.push(self.push_key, '和彩云签到', content)
 
 
 def run(Cookie: str, OpenLuckDraw: bool, push_key: str):
     account = Account(Cookie)
     account.OpenLuckDraw = OpenLuckDraw
-    account.Skey = push_key
+    account.push_key = push_key
     account.sign_in()
 
 
