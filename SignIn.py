@@ -17,18 +17,8 @@ class Account():
         self.Cookie = ""  # 抓包Cookie 存在引号时 请使用 \ 转义
         self.Referer = ""  # 抓包referer
         self.UA = "Mozilla/5.0 (Linux; Android 10; M2007J3SC Build/QKQ1.191222.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/83.0.4103.106 Mobile Safari/537.36 MCloudApp/7.6.0"
-
-    def push(self, title, content):
-        url = "https://push.xuthus.cc/send/" + self.Skey
-        data = title + "\n" + content
-        # 发送请求
-        res = requests.post(url=url, data=data.encode('utf-8')).text
-        # 输出发送结果
-        print(res)
-
-    def getEncryptTime(self):
-        target = "http://caiyun.feixin.10086.cn:7070/portal/ajax/tools/opRequest.action"
-        headers = {
+        self.session = requests.session()
+        self.session.headers = {
             "Host": "caiyun.feixin.10086.cn:7070",
             "Accept": "*/*",
             "X-Requested-With": "XMLHttpRequest",
@@ -40,10 +30,21 @@ class Account():
             "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
             "Cookie": self.Cookie,
         }
+
+    def push(self, title, content):
+        url = "https://push.xuthus.cc/send/" + self.Skey
+        data = title + "\n" + content
+        # 发送请求
+        res = requests.post(url=url, data=data.encode('utf-8')).text
+        # 输出发送结果
+        print(res)
+
+    def getEncryptTime(self):
+        target = "http://caiyun.feixin.10086.cn:7070/portal/ajax/tools/opRequest.action"
         payload = parse.urlencode({
             "op": "currentTimeMillis"
         })
-        resp = json.loads(requests.post(target, headers=headers, data=payload).text)
+        resp = json.loads(self.session.post(target, data=payload).text)
         if resp['code'] != 10000:
             print('获取时间戳失败: ', resp['msg'])
             return 0
@@ -63,24 +64,11 @@ class Account():
 
     def luckDraw(self):
         target = "http://caiyun.feixin.10086.cn:7070/portal/ajax/common/caiYunSignIn.action"
-        headers = {
-            "Host": "caiyun.feixin.10086.cn:7070",
-            "Accept": "*/*",
-            "X-Requested-With": "XMLHttpRequest",
-            "User-Agent": self.UA,
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Origin": "http://caiyun.feixin.10086.cn:7070",
-            "Referer": self.Referer,
-            "Accept-Encoding": "gzip, deflate",
-            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-            "Cookie": self.Cookie,
-        }
         payload = parse.urlencode({
             "op": "luckDraw",
             "data": self.getTicket()
         })
-
-        resp = json.loads(requests.post(target, headers=headers, data=payload).text)
+        resp = json.loads(self.session.post(target, data=payload).text)
 
         if resp['code'] != 10000:
             print('自动抽奖失败: ', resp['msg'])
@@ -103,18 +91,6 @@ class Account():
 
     def run(self):
         target = "http://caiyun.feixin.10086.cn:7070/portal/ajax/common/caiYunSignIn.action"
-        headers = {
-            "Host": "caiyun.feixin.10086.cn:7070",
-            "Accept": "*/*",
-            "X-Requested-With": "XMLHttpRequest",
-            "User-Agent": self.UA,
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Origin": "http://caiyun.feixin.10086.cn:7070",
-            "Referer": self.Referer,
-            "Accept-Encoding": "gzip, deflate",
-            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-            "Cookie": self.Cookie,
-        }
 
         ticket = self.getTicket()
         payload = parse.urlencode({
@@ -122,7 +98,7 @@ class Account():
             "data": ticket,
         })
 
-        resp = json.loads(requests.post(target, headers=headers, data=payload).text)
+        resp = json.loads(self.session.post(target, data=payload).text)
         if resp['code'] != 10000:
             self.push('和彩云签到', '失败:' + resp['msg'])
         else:
