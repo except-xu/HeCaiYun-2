@@ -183,7 +183,8 @@ class Account():
             content = '签到成功\n本月累计签到:' + str(resp['result']['monthDays']) + '天\n总积分:' + str(resp['result']['totalPoints'])
             if self.OpenLuckDraw:
                 log("开始抽奖")
-                content += '\n\n' + self.luckDraw()
+                resp_luckDraw = self.luckDraw()
+                content += '\n' + resp_luckDraw
             log(content)
             Tools.push(self.push_key, '【成功】和彩云签到', content)
 
