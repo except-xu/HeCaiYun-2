@@ -218,8 +218,11 @@ def cli_arg_run(argv):
     for i in range(0, len(Cookie_list)):
         Cookie = Cookie_list[i]
         OpenLuckDraw = False  # 默认不开启抽奖
-        if "ture" == OpenLuckDraw_list[i]:  # 如果设置了ture才开启
-            OpenLuckDraw = True
+        try:
+            if "ture" == OpenLuckDraw_list[i]:  # 如果设置了ture才开启
+                OpenLuckDraw = True
+        except IndexError as e:
+            log("OpenLuckDraw配置数量不足，采用默认")
         # elif "false" == OpenLuckDraw_list[i]:
         #     OpenLuckDraw = False
 
