@@ -250,7 +250,11 @@ if __name__ == '__main__':
         cli_arg_run(sys.argv)
     else:
         log("账号配置文件启动")
-        account_conf_file = "account_conf.json"
+        if os.path.exists("account_conf_dev.json"):
+            log("读取开发模式的用户配置文件并启动")
+            account_conf_file = "account_conf_dev.json"
+        else:
+            account_conf_file = "account_conf.json"
         if not os.path.exists(account_conf_file) or not os.path.isfile(account_conf_file):
             log("不存在账号配置文件{}".format(account_conf_file))
             exit(1)
